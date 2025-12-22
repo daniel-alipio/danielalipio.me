@@ -68,6 +68,7 @@ const connect = async () => {
                     host: config.handler.redis.host,
                     port: config.handler.redis.port,
                     password: config.handler.redis.password,
+                    db: config.handler.redis.db || 1,
                     ...options
                 });
             }
