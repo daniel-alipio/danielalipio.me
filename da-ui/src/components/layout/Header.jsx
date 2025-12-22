@@ -26,15 +26,23 @@ const Header = () => {
 
   const handleNavClick = (e, href) => {
     e.preventDefault();
-    setIsMobileMenuOpen(false);
 
     const element = document.querySelector(href);
     if (element) {
       const offsetTop = element.offsetTop - 80;
-      window.scrollTo({
-        top: offsetTop,
-        behavior: 'smooth'
-      });
+
+      const wasMobileMenuOpen = isMobileMenuOpen;
+
+      setIsMobileMenuOpen(false);
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: offsetTop,
+          behavior: 'smooth'
+        });
+      }, wasMobileMenuOpen ? 300 : 0);
+    } else {
+      setIsMobileMenuOpen(false);
     }
   };
 
