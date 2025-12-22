@@ -32,7 +32,7 @@ dist-ssr
 .env.local
 .env.*.local
 *.pem
-/scripts/
+da-api/scripts/
 
 # Notas pessoais
 *.txt
