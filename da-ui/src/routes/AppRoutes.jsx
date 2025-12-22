@@ -8,7 +8,7 @@ const EXTERNAL_LINKS = [
     { id: 'instagram', url: 'https://www.instagram.com/danielhs/' },
     { id: 'x', url: 'https://www.x.com/danielalipio' },
     { id: 'linkedin', url: 'https://www.linkedin.com/in/danielalipio/' },
-    { id: 'github', url: 'https://www.github.com/danielalipio' },
+    { id: 'github', url: 'https://www.github.com/daniel-alipio' },
 ];
 
 const ExternalRedirect = ({ to }) => {
