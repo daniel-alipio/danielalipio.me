@@ -22,7 +22,7 @@ const config = require('../config/config')();
 const REQUIRED_ENV_VARS = [
     'USER_SECRET', 'ADMIN_SECRET', 'SESSION_SECRET', 'JWT_SECRET', 'JWT_SECRET_TEMP',
     'MYSQL_HOST', 'MYSQL_PORT', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE',
-    'REDIS_URL', 'REGIS_HOST', 'REDIS_PORT', 'REDIS_PASSWORD', 'MONGODB_URI', 'MYSQL_URI'
+    'REDIS_URL', 'REDIS_HOST', 'REDIS_PORT', 'MONGODB_URI', 'MYSQL_URI'
 ];
 
 function loadRoutes(app) {
@@ -47,7 +47,6 @@ function loadRoutes(app) {
                             const auth = (req, res, next) => authMiddleware(req, res, next, routeModule);
                             const validation = routeModule.validate || ((req, res, next) => next());
 
-                            // Aplicar rate limiter específico se a rota tiver
                             const middlewares = [auth, validation];
                             if (routeModule.rateLimiter) {
                                 middlewares.unshift(routeModule.rateLimiter);
@@ -75,6 +74,7 @@ const app = express();
 const allowedOrigins = [
     'https://danielalipio.vercel.app',
     'https://www.danielalipio.me',
+    'https://danielalipio.me'
 ];
 
 if (process.env.FRONTEND_URL) {
@@ -89,13 +89,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const corsOptions = {
     origin: (origin, callback) => {
-        if (!origin) {
-            if (process.env.NODE_ENV === 'production') {
-                logger.warn('CORS bloqueou requisição sem origin');
-                return callback(new Error('Origin obrigatória'), false);
-            }
-            return callback(null, true);
-        }
+        if (!origin) return callback(null, true);
 
         const isAllowed = allowedOrigins.includes(origin);
 
