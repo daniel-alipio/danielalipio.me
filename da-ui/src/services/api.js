@@ -157,6 +157,15 @@ const apiService = {
       throw error;
     }
   },
+
+  getSpotifyNowPlaying: async () => {
+    try {
+      return await api.get(ENDPOINTS.SPOTIFY_NOW_PLAYING);
+    } catch (error) {
+      console.error('[API Service] Erro ao buscar status do Spotify:', error);
+      throw error;
+    }
+  },
 };
 
 export { ENDPOINTS };

@@ -10,6 +10,10 @@ const ENDPOINTS = {
 
   // Health
   HEALTH: '/health',
+
+  // Integrations
+  SPOTIFY_NOW_PLAYING: '/v1/integrations/spotify',
+  SPOTIFY_STREAM: '/v1/integrations/spotify-stream',
 };
 
 export default ENDPOINTS;
