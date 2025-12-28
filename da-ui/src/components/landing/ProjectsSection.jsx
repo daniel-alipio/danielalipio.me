@@ -321,7 +321,7 @@ const ProjectsSection = () => {
           <p className="text-gray-500 font-mono text-sm">
             Mais projetos e contribuições open-source no meu{' '}
             <a
-              href="https://github.com/danielalipio"
+              href="/github"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-gray-300 underline underline-offset-4 transition-colors"
