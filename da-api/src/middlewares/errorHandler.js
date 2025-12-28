@@ -71,6 +71,7 @@ const setupProcessHandlers = () => {
             process.exit(0);
         }, 5000);
     };
+
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 };

@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
@@ -70,6 +71,7 @@ function loadRoutes(app) {
 }
 
 const app = express();
+const httpServer = http.createServer(app);
 
 const allowedOrigins = [
     'https://danielalipio.vercel.app',
@@ -344,9 +346,11 @@ const PORT = process.env.PORT || 3000;
         await connect();
         await connectRedis();
 
-        app.listen(PORT, () => {
-            logger.info(`Servidor API rodando na porta ${PORT}`);
-            
+        httpServer.listen(PORT, () => {
+            logger.info(`🚀 Servidor HTTP rodando na porta ${PORT}`);
+            logger.info(`📡 SSE (Server-Sent Events) habilitado`);
+            logger.info(`🎵 Spotify Stream: /v1/integrations/spotify-stream`);
+
             publishEvent('OnApiReady', {
                 uptime: process.uptime(),
                 timestamp: new Date(),
@@ -360,4 +364,5 @@ const PORT = process.env.PORT || 3000;
     }
 })();
 
-module.exports = app;
+
+module.exports = { app, httpServer };
