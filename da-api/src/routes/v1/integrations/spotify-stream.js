@@ -40,8 +40,6 @@ const detectEvent = (oldState, newState) => {
       return { event: 'spotify:seek', data: newState };
     }
   }
-
-  logger.debug(`[SSE] ⏭️ Progresso normal, não enviando (${Math.floor(newState.progress_ms / 1000)}s)`);
   return null;
 };
 
