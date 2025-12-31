@@ -3,12 +3,18 @@ const logger = require('../../utils/logger');
 const config = require('../../config/config')();
 
 const CACHE_KEY = 'github:activity';
-const CACHE_TTL = 3600; // 1 hora
+const CACHE_TTL = 3600;
 
-/**
- * Busca as contribuições reais do GitHub via GraphQL API
- * Retorna apenas os últimos 3 meses (90 dias)
- */
+const CONTRIBUTION_LEVELS = {
+    'NONE': 0,
+    'FIRST_QUARTILE': 1,
+    'SECOND_QUARTILE': 2,
+    'THIRD_QUARTILE': 3,
+    'FOURTH_QUARTILE': 4
+};
+
+const MONTHS_TO_FETCH = 6;
+
 async function fetchGitHubContributions() {
     const { username, token } = config.github;
 
@@ -16,10 +22,9 @@ async function fetchGitHubContributions() {
         throw new Error('GitHub username ou token não configurados');
     }
 
-    // Calcula as datas para os últimos 3 meses
     const today = new Date();
-    const threeMonthsAgo = new Date(today);
-    threeMonthsAgo.setMonth(today.getMonth() - 6);
+    const startDate = new Date(today);
+    startDate.setMonth(today.getMonth() - MONTHS_TO_FETCH);
 
     const query = `
         query($userName:String!, $from:DateTime!, $to:DateTime!) {
@@ -50,7 +55,7 @@ async function fetchGitHubContributions() {
             query,
             variables: {
                 userName: username,
-                from: threeMonthsAgo.toISOString(),
+                from: startDate.toISOString(),
                 to: today.toISOString()
             }
         })
@@ -69,24 +74,10 @@ async function fetchGitHubContributions() {
     return data.data.user.contributionsCollection.contributionCalendar;
 }
 
-/**
- * Converte o contributionLevel do GitHub para número
- * NONE = 0, FIRST_QUARTILE = 1, SECOND_QUARTILE = 2, THIRD_QUARTILE = 3, FOURTH_QUARTILE = 4
- */
 function getLevelNumber(contributionLevel) {
-    const levels = {
-        'NONE': 0,
-        'FIRST_QUARTILE': 1,
-        'SECOND_QUARTILE': 2,
-        'THIRD_QUARTILE': 3,
-        'FOURTH_QUARTILE': 4
-    };
-    return levels[contributionLevel] || 0;
+    return CONTRIBUTION_LEVELS[contributionLevel] || 0;
 }
 
-/**
- * Processa os dados do GitHub para o formato esperado pelo frontend
- */
 function processGitHubData(calendar) {
     const activities = [];
 
@@ -101,25 +92,6 @@ function processGitHubData(calendar) {
     });
 
     return activities;
-}
-
-/**
- * Calcula estatísticas totais
- */
-function calculateStats(activities) {
-    const total = activities.reduce((sum, day) => sum + day.count, 0);
-    const daysWithActivity = activities.filter(day => day.count > 0).length;
-    const currentStreak = calculateCurrentStreak(activities);
-    const longestStreak = calculateLongestStreak(activities);
-
-    return {
-        total,
-        daysWithActivity,
-        currentStreak,
-        longestStreak,
-        averagePerDay: Math.round((total / activities.length) * 10) / 10,
-        totalDays: activities.length
-    };
 }
 
 function calculateCurrentStreak(activities) {
@@ -150,6 +122,22 @@ function calculateLongestStreak(activities) {
     return longest;
 }
 
+function calculateStats(activities) {
+    const total = activities.reduce((sum, day) => sum + day.count, 0);
+    const daysWithActivity = activities.filter(day => day.count > 0).length;
+    const currentStreak = calculateCurrentStreak(activities);
+    const longestStreak = calculateLongestStreak(activities);
+
+    return {
+        total,
+        daysWithActivity,
+        currentStreak,
+        longestStreak,
+        averagePerDay: Math.round((total / activities.length) * 10) / 10,
+        totalDays: activities.length
+    };
+}
+
 module.exports = {
     method: 'GET',
     requiresAuth: false,
@@ -169,7 +157,6 @@ module.exports = {
 
             res.set('X-Cache', 'MISS');
 
-            // Busca dados reais do GitHub
             const calendar = await fetchGitHubContributions();
             const activities = processGitHubData(calendar);
             const stats = calculateStats(activities);
@@ -180,7 +167,6 @@ module.exports = {
                 totalContributions: calendar.totalContributions
             };
 
-            // Cache por 1 hora
             await setCache(CACHE_KEY, data, CACHE_TTL);
 
             return res.status(200).json({
