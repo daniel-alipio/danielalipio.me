@@ -1,25 +1,11 @@
 import { motion } from 'framer-motion';
 import { MapPin, Calendar, Code2, GraduationCap } from 'lucide-react';
 import { DAIcon } from '../icons/BrandIcons';
-import { useState, useEffect } from 'react';
-import { apiLogger } from '../../utils/apiLogger';
+import { useActivity } from '../../hooks/useActivity';
+import GitHubContributions from '../ui/GitHubContributions';
 
 const AboutSection = () => {
-  const [apiLogs, setApiLogs] = useState([]);
-  const maxLogs = 8;
-
-  useEffect(() => {
-    const unsubscribe = apiLogger.subscribe((log) => {
-      setApiLogs(prev => {
-        const newLogs = [log, ...prev].slice(0, maxLogs);
-        return newLogs;
-      });
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  const { activity, stats, loading } = useActivity();
 
   const tags = [
     { icon: MapPin, label: 'Batatais, SP', color: 'text-gray-400' },
@@ -76,7 +62,7 @@ const AboutSection = () => {
                         <DAIcon className="w-4 h-4 text-gray-600" />
                         <span className="text-xs font-mono text-gray-500">~/</span>
                         <span className="text-xs font-mono text-white font-semibold">daniel-alipio</span>
-                        <span className="text-xs font-mono text-gray-600">.profile</span>
+                        <span className="text-xs font-mono text-gray-600">.contributions</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -85,59 +71,18 @@ const AboutSection = () => {
                         transition={{ duration: 2, repeat: Infinity }}
                         className="w-2 h-2 rounded-full bg-green-500"
                       />
-                      <span className="text-xs font-mono text-gray-600">online</span>
+                      <span className="text-xs font-mono text-gray-600">active</span>
                     </div>
                   </div>
 
-                  <div className="p-6 font-mono text-xs space-y-2 min-h-[280px] max-h-[280px] overflow-hidden">
-                    <div className="flex items-center gap-2 text-gray-500 mb-3">
-                      <span>$</span>
-                      <span>node api-server.js</span>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      {apiLogs.length === 0 ? (
-                        <div className="text-gray-600">Aguardando requisições...</div>
-                      ) : (
-                        apiLogs.map((log) => (
-                          <motion.div
-                            key={log.id}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="flex items-start gap-2"
-                          >
-                            {log.type === 'request' && (
-                              <>
-                                <span className="text-blue-400">→</span>
-                                <span className="text-yellow-400">{log.method}</span>
-                                <span className="text-gray-400">{log.endpoint}</span>
-                              </>
-                            )}
-                            {log.type === 'response' && (
-                              <>
-                                <span className="text-green-400">←</span>
-                                <span className="text-green-400">{log.status}</span>
-                                <span className="text-gray-400">{log.message}</span>
-                              </>
-                            )}
-                            {log.type === 'info' && (
-                              <>
-                                <span className="text-cyan-400">ℹ</span>
-                                <span className="text-white">{log.message}</span>
-                              </>
-                            )}
-                            {log.type === 'error' && (
-                              <>
-                                <span className="text-red-400">✗</span>
-                                <span className="text-red-400">{log.status}</span>
-                                <span className="text-gray-400">{log.message}</span>
-                              </>
-                            )}
-                          </motion.div>
-                        ))
-                      )}
-                    </div>
+                  <div className="p-6 min-h-[280px]">
+                    {loading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-gray-500 text-sm font-mono">Carregando atividades...</div>
+                      </div>
+                    ) : (
+                      <GitHubContributions activities={activity} stats={stats} />
+                    )}
                   </div>
                 </div>
 
