@@ -52,6 +52,11 @@ module.exports = () => {
             jwtSecret: process.env.JWT_SECRET
         },
 
+        github: {
+            username: process.env.GITHUB_USERNAME,
+            token: process.env.GITHUB_TOKEN
+        },
+
         IS_DEV: NODE_ENV === 'development'
     };
 };
