@@ -8,6 +8,9 @@ const ENDPOINTS = {
   // Contact
   CONTACT: '/v1/contact',
 
+  // Activity
+  ACTIVITY: '/v1/activity',
+
   // Health
   HEALTH: '/health',
 

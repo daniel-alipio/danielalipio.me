@@ -1,6 +1,5 @@
 import axios from 'axios';
 import ENDPOINTS from '../config/endpoints';
-import { apiLogger } from '../utils/apiLogger';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -13,8 +12,6 @@ const api = axios.create({
 
 api.interceptors.request.use(
     (config) => {
-      apiLogger.logRequest(config.method, config.url);
-
       if (import.meta.env.DEV) {
         console.log(`[API] ${config.method.toUpperCase()} ${config.url}`, {
           params: config.params,
@@ -32,14 +29,12 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
     (response) => {
-      const message = response.data?.data?.length
-        ? `${response.data.data.length} items found`
-        : response.data?.message || 'Success';
-
-      apiLogger.logResponse(response.status, message, response.config.url);
-
       if (import.meta.env.DEV) {
-        console.log(`[API] ✅ ${response.status} ${response.config.url}`);
+        const message = response.data?.data?.length
+          ? `${response.data.data.length} items found`
+          : response.data?.message || 'Success';
+
+        console.log(`[API] ✅ ${response.status} ${response.config.url} - ${message}`);
       }
 
       return response.data;
@@ -92,7 +87,6 @@ api.interceptors.response.use(
         };
 
         const errorMsg = data?.message || errorMessages[status] || 'Erro desconhecido';
-        apiLogger.logError(status, errorMsg);
 
         console.error(`[API] ❌ ${status} - ${errorMsg}`);
 
@@ -104,7 +98,6 @@ api.interceptors.response.use(
       }
 
       if (error.request) {
-        apiLogger.logError(0, 'Servidor não está respondendo');
         console.error('[API] 🔌 Servidor não está respondendo');
         return Promise.reject({
           status: 0,
@@ -112,7 +105,6 @@ api.interceptors.response.use(
         });
       }
 
-      apiLogger.logError(-1, error.message);
       console.error('[API] ⚙️ Erro de configuração:', error.message);
       return Promise.reject({
         status: -1,
@@ -163,6 +155,15 @@ const apiService = {
       return await api.get(ENDPOINTS.SPOTIFY_NOW_PLAYING);
     } catch (error) {
       console.error('[API Service] Erro ao buscar status do Spotify:', error);
+      throw error;
+    }
+  },
+
+  getActivity: async () => {
+    try {
+      return await api.get(ENDPOINTS.ACTIVITY);
+    } catch (error) {
+      console.error('[API Service] Erro ao buscar atividades:', error);
       throw error;
     }
   },
