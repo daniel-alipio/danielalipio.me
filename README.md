@@ -223,11 +223,20 @@ d.me/
 │       │   │   ├── Header.jsx           # Cabeçalho
 │       │   │   └── SEO.jsx              # Componente SEO
 │       │   └── ui/
-│       │       └── OptimizedImage.jsx   # Componente de imagem otimizada
+│       │       ├── ActivityDisplay.jsx      # Display unificado de atividades
+│       │       ├── GitHubContributions.jsx  # Visualização de contribuições GitHub
+│       │       ├── OptimizedImage.jsx       # Componente de imagem otimizada
+│       │       ├── SpotifyBadge.jsx         # Badge do Spotify
+│       │       ├── SpotifyDisplay.jsx       # Display de música Spotify
+│       │       ├── SpotifyNowPlaying.jsx    # Now Playing Spotify
+│       │       └── SteamDisplay.jsx         # Display de jogo Steam
 │       ├── config/
 │       │   └── endpoints.js             # Endpoints da API
 │       ├── hooks/
-│       │   └── useDebounce.js           # Hook de debounce
+│       │   ├── useActivity.js           # Hook de atividades GitHub
+│       │   ├── useDebounce.js           # Hook de debounce
+│       │   ├── useSpotify.js            # Hook de integração Spotify
+│       │   └── useSteam.js              # Hook de integração Steam
 │       ├── pages/
 │       │   ├── LandingPage.jsx          # Página principal
 │       │   └── NotFoundPage.jsx         # Página 404
@@ -409,6 +418,18 @@ module.exports = {
 - Retorna tecnologias por categoria
 - Ordenação por categoria e order
 
+**activity.js** (GET /api/v1/activity):
+- Cache Redis (30 minutos)
+- Integração com GitHub API
+- Retorna contribuições dos últimos 6 meses
+- Calcula estatísticas (total, dias ativos, sequências)
+- Agrupa por semanas para visualização em grid
+- Header `X-Cache: HIT/MISS`
+
+**Integrações** (`integrations/`):
+- `spotify.js`, `spotify-stream.js`, `spotify-stats.js` - Integração Spotify
+- `steam.js`, `steam-stream.js`, `steam-stats.js` - Integração Steam
+
 #### 5. **Utils Layer** (`src/utils/`)
 
 **logger.js**: Sistema de logging Winston
@@ -508,6 +529,7 @@ npm run seed     # Seed de dados
 |--------|----------|-----------|------|-------|
 | GET | `/api/v1/projects` | Lista projetos | ❌ | ✅ (1h) |
 | GET | `/api/v1/stacks` | Lista tecnologias | ❌ | ✅ (1h) |
+| GET | `/api/v1/activity` | Contribuições GitHub (6 meses) | ❌ | ✅ (30min) |
 | POST | `/api/v1/contact` | Envia contato | ❌ | ❌ |
 | GET | `/api/health` | Health check | ❌ | ❌ |
 
@@ -533,7 +555,7 @@ O frontend é uma Single Page Application (SPA) moderna construída com React 19
 
 **Landing:**
 - `HeroSection.jsx`: Hero com animações Framer Motion, troca de roles, imagem otimizada
-- `AboutSection.jsx`: Seção sobre mim com biografia
+- `AboutSection.jsx`: Seção sobre mim com biografia e visualização de contribuições do GitHub em tempo real
 - `StacksSection.jsx`: Grid de tecnologias com categorias expansíveis, ícones animados
 - `ProjectsSection.jsx`: Cards de projetos com modal detalhado, lazy loading
 - `ContactSection.jsx`: CTA de contato com formulário
@@ -545,6 +567,12 @@ O frontend é uma Single Page Application (SPA) moderna construída com React 19
 
 **UI:**
 - `OptimizedImage.jsx`: Componente de imagem com lazy loading, placeholder, error handling
+- `GitHubContributions.jsx`: Visualização de contribuições do GitHub estilo heatmap (6 meses)
+- `ActivityDisplay.jsx`: Display unificado de atividades em tempo real (Spotify, Steam)
+- `SpotifyDisplay.jsx`: Componente especializado para exibição de música Spotify
+- `SpotifyNowPlaying.jsx`: Widget de "Now Playing" do Spotify
+- `SpotifyBadge.jsx`: Badge de status do Spotify
+- `SteamDisplay.jsx`: Componente para exibição de jogo Steam
 
 #### 2. **Services** (`src/services/`)
 
@@ -590,7 +618,32 @@ Rotas:
 - Design personalizado
 - Link de retorno
 
-#### 5. **Utils** (`src/utils/`)
+#### 5. **Hooks** (`src/hooks/`)
+
+**useActivity.js**: Hook de atividades GitHub
+- Busca contribuições dos últimos 6 meses
+- Retorna activities, stats, loading e error
+- Integração com endpoint `/api/v1/activity`
+- useEffect para fetch automático
+
+**useSpotify.js**: Hook de integração Spotify
+- Conexão SSE para streaming em tempo real
+- Detecção de eventos (changemusic, play, pause, seek)
+- Estado de música atual, progresso e loading
+- Reconexão automática em caso de erro
+
+**useSteam.js**: Hook de integração Steam
+- Conexão SSE para streaming em tempo real
+- Detecção de eventos (gamestart, gamestop, gamechange)
+- Estado de jogo atual e loading
+- Reconexão automática em caso de erro
+
+**useDebounce.js**: Hook de debounce
+- Atraso de atualização de valor
+- Útil para inputs de busca
+- Reduz chamadas à API
+
+#### 6. **Utils** (`src/utils/`)
 
 **apiLogger.js**: Logger de requisições
 - Log de request (método, URL)
@@ -604,12 +657,6 @@ Rotas:
 **navigation.js**: Utilitários de navegação
 - Scroll suave para seções
 - Hash navigation
-
-#### 6. **Hooks** (`src/hooks/`)
-
-**useDebounce.js**: Hook de debounce
-- Delay configurável
-- Útil para inputs de busca
 
 ### Configuração de Build
 
@@ -751,6 +798,19 @@ BREVO_SMTP_USER=your-brevo-user
 BREVO_SMTP_PASSWORD=your-brevo-password
 ADMIN_EMAIL=your-admin@email.com
 
+# GitHub API (obter em https://github.com/settings/tokens)
+GITHUB_TOKEN=your-github-personal-access-token
+GITHUB_USERNAME=your-github-username
+
+# Spotify API (obter em https://developer.spotify.com/dashboard)
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
+SPOTIFY_REFRESH_TOKEN=your-spotify-refresh-token
+
+# Steam API (obter em https://steamcommunity.com/dev/apikey)
+STEAM_API_KEY=your-steam-api-key
+STEAM_ID=your-steam-id-64
+
 RATE_LIMIT_WINDOW=900000
 RATE_LIMIT_MAX=50
 
@@ -770,7 +830,26 @@ cd da-api
 node scripts/crypto-gen.js
 ```
 
-### 6. Popular Banco de Dados
+### 6. Configurar Tokens de API (Opcional)
+
+**GitHub Token:**
+1. Acessar [GitHub Settings > Tokens](https://github.com/settings/tokens)
+2. Criar novo token (classic)
+3. Selecionar escopos: `read:user`, `repo`
+4. Copiar token e adicionar ao `.env`
+
+**Spotify Token:**
+1. Criar app em [Spotify Dashboard](https://developer.spotify.com/dashboard)
+2. Usar script de geração: `node scripts/generate-spotify-token.js`
+3. Copiar tokens e adicionar ao `.env`
+
+**Steam API Key:**
+1. Acessar [Steam Web API Key](https://steamcommunity.com/dev/apikey)
+2. Registrar domínio e obter key
+3. Obter Steam ID em [SteamID.io](https://steamid.io/)
+4. Adicionar ao `.env`
+
+### 7. Popular Banco de Dados
 
 ```bash
 cd da-api
@@ -995,6 +1074,8 @@ vercel --prod
 ✅ **404** personalizado  
 ✅ **Acessibilidade** (ARIA)  
 ✅ **Integrações em Tempo Real** (Spotify + Steam)  
+✅ **Visualização GitHub** com heatmap de contribuições  
+✅ **Tooltips Inteligentes** com posicionamento responsivo  
 
 ---
 
@@ -1002,7 +1083,11 @@ vercel --prod
 
 ### Visão Geral
 
-O portfólio conta com integrações em tempo real que exibem atividades atuais do desenvolvedor através de **Server-Sent Events (SSE)**, proporcionando uma experiência dinâmica e pessoal.
+O portfólio conta com integrações que exibem atividades do desenvolvedor, proporcionando uma experiência dinâmica e pessoal:
+
+- **Spotify**: Música sendo ouvida em tempo real via **Server-Sent Events (SSE)**
+- **Steam**: Jogo sendo jogado em tempo real via **Server-Sent Events (SSE)**
+- **GitHub**: Visualização de contribuições dos últimos 6 meses em formato heatmap
 
 ### 🎵 Integração Spotify
 
@@ -1127,6 +1212,104 @@ STEAM_ID=your-steam-id-64
 - **Cache:** Redis 1h TTL
 - **Tráfego:** ~8 req/5min (20% do limite)
 - **Otimização:** Polling mais espaçado (Steam atualiza ~10s)
+
+---
+
+### 📊 Visualização de Contribuições GitHub
+
+Sistema que exibe um heatmap das contribuições do GitHub nos últimos 6 meses, estilo grid de quadrados verdes, similar ao perfil do GitHub.
+
+#### Funcionalidades
+
+✅ **Heatmap de Contribuições:**
+  - Grid estilo GitHub com quadrados verdes
+  - 6 meses de histórico (26 semanas)
+  - 5 níveis de intensidade (0-4)
+  - Cores progressivas baseadas na quantidade de contribuições
+
+✅ **Estatísticas Detalhadas:**
+  - Total de contribuições
+  - Dias com atividade
+  - Sequência atual (current streak)
+  - Maior sequência (longest streak)
+
+✅ **Interface Responsiva:**
+  - Tooltip personalizado ao passar o mouse
+  - Ajuste automático de posicionamento (não vaza da tela)
+  - Grid adaptável à largura do container
+  - Labels de meses e dias da semana
+
+✅ **Tooltip Inteligente:**
+  - Exibe número de contribuições e data
+  - Posicionamento dinâmico (acima/abaixo conforme espaço)
+  - Seta apontando para o quadrado selecionado
+  - Responsivo para mobile (não vaza das bordas)
+
+#### Arquitetura
+
+```
+GitHub API → Activity Route → useActivity Hook → GitHubContributions Component
+                     ↓
+              Calculo de níveis e estatísticas
+```
+
+#### Endpoints
+
+| Endpoint | Método | Descrição |
+|----------|--------|-----------|
+| `/api/v1/activity` | GET | Contribuições dos últimos 6 meses |
+
+#### Configuração
+
+```env
+# GitHub Token (obter em https://github.com/settings/tokens)
+GITHUB_TOKEN=your-personal-access-token
+GITHUB_USERNAME=your-github-username
+```
+
+**Como obter GitHub Token:**
+1. Acessar [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+2. Criar novo token (classic)
+3. Selecionar escopo `read:user` e `repo`
+4. Copiar o token gerado
+
+#### Níveis de Contribuição
+
+| Nível | Cor | Contribuições |
+|-------|-----|---------------|
+| 0 | `#161b22` (Cinza escuro) | 0 |
+| 1 | `#0e4429` (Verde escuro) | 1-3 |
+| 2 | `#006d32` (Verde médio) | 4-6 |
+| 3 | `#26a641` (Verde claro) | 7-9 |
+| 4 | `#39d353` (Verde brilhante) | 10+ |
+
+#### Componente GitHubContributions
+
+**Props:**
+- `activities`: Array de objetos com data, count e level
+- `stats`: Objeto com estatísticas (total, daysWithActivity, currentStreak, longestStreak)
+
+**Features:**
+- Portal do React para tooltip (renderizado no body)
+- Animações com Framer Motion
+- Grid CSS responsivo
+- Cálculo automático de semanas e meses
+- Limite de 26 semanas (6 meses)
+
+**Exemplo de Uso:**
+```jsx
+<GitHubContributions 
+  activities={activityData} 
+  stats={statsData} 
+/>
+```
+
+#### Performance
+
+- **Loading:** Skeleton com animação pulse
+- **Cache:** Dados podem ser cacheados no backend
+- **Bundle Size:** ~8KB (minificado + gzipped)
+- **Otimização:** Renderização eficiente com React portals
 
 ---
 
